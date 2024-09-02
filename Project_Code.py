@@ -101,82 +101,106 @@ def calculate_convexity_callable(price, par, coupon_rate, call_price, call_date,
     convexity = (convexity_sum / (price * freq ** 2))/10
     return convexity
 
-# User inputs
-bond_type = st.selectbox("Bond Type:", ["Corporate", "Treasury", "Municipal", "Agency/GSE", "Fixed Rate"])
-price = st.number_input("Price:", min_value=0.0, value=98.5, step=0.01)
-annual_coupon_rate = st.number_input("Annual Coupon Rate (%):", min_value=0.0, value=5.0, step=0.01)
-coupon_frequency = st.selectbox("Coupon Frequency:", ["Annual", "Semi-Annual", "Quarterly", "Monthly/GSE"])
-maturity_date = st.date_input("Maturity Date:", value=datetime.today().date() + relativedelta(years=10))
-callable = False
-error_message = ""
-if bond_type == "Corporate":
-    callable = st.checkbox("Callable")
-    if callable:
-        # Default call date is set to one year before maturity date
-        call_date = st.date_input("Call Date:", value=maturity_date - relativedelta(years=1))
-        call_price = st.number_input("Call Price:", min_value=0.0, value=100.0, step=0.01)
-        if call_date >= maturity_date:
-            error_message = "Error: Call date must be earlier than maturity date."
+# User inputs for multiple bonds
+num_bonds = st.slider("Select number of bonds (up to 10):", min_value=1, max_value=10, value=1)
 
-par_value = st.number_input("Par Value:", min_value=0.0, value=100.0, step=0.01)
-quantity = st.number_input("Quantity:", min_value=1, value=10, step=1)
-settlement_date = st.date_input("Settlement Date:", value=datetime.today().date())
-total_markup = st.number_input("Total Markup:", min_value=0.0, value=0.0, step=0.01)
-duration_type = st.selectbox("Duration Type:", ["Macaulay", "Modified", "Key Rate"])
+bonds = []
+for i in range(num_bonds):
+    st.write(f"### Bond {i+1}")
+    bond_type = st.selectbox(f"Bond Type {i+1}:", ["Corporate", "Treasury", "Municipal", "Agency/GSE", "Fixed Rate"], key=f"bond_type_{i}")
+    price = st.number_input(f"Price {i+1}:", min_value=0.0, value=98.5, step=0.01, key=f"price_{i}")
+    annual_coupon_rate = st.number_input(f"Annual Coupon Rate {i+1} (%):", min_value=0.0, value=5.0, step=0.01, key=f"coupon_rate_{i}")
+    coupon_frequency = st.selectbox(f"Coupon Frequency {i+1}:", ["Annual", "Semi-Annual", "Quarterly", "Monthly/GSE"], key=f"coupon_frequency_{i}")
+    maturity_date = st.date_input(f"Maturity Date {i+1}:", value=datetime.today().date() + relativedelta(years=10), key=f"maturity_date_{i}")
+    callable = False
+    error_message = ""
+    if bond_type == "Corporate":
+        callable = st.checkbox(f"Callable {i+1}", key=f"callable_{i}")
+        if callable:
+            # Default call date is set to one year before maturity date
+            call_date = st.date_input(f"Call Date {i+1}:", value=maturity_date - relativedelta(years=1), key=f"call_date_{i}")
+            call_price = st.number_input(f"Call Price {i+1}:", min_value=0.0, value=100.0, step=0.01, key=f"call_price_{i}")
+            if call_date >= maturity_date:
+                error_message = f"Error: Call date for Bond {i+1} must be earlier than maturity date."
 
-# Show error message if call date is invalid
-if error_message:
-    st.error(error_message)
+    par_value = st.number_input(f"Par Value {i+1}:", min_value=0.0, value=100.0, step=0.01, key=f"par_value_{i}")
+    quantity = st.number_input(f"Quantity {i+1}:", min_value=1, value=10, step=1, key=f"quantity_{i}")
+    settlement_date = st.date_input(f"Settlement Date {i+1}:", value=datetime.today().date(), key=f"settlement_date_{i}")
+    total_markup = st.number_input(f"Total Markup {i+1}:", min_value=0.0, value=0.0, step=0.01, key=f"markup_{i}")
+    duration_type = st.selectbox(f"Duration Type {i+1}:", ["Macaulay", "Modified", "Key Rate"], key=f"duration_type_{i}")
+
+    bond = {
+        "bond_type": bond_type,
+        "price": price,
+        "annual_coupon_rate": annual_coupon_rate,
+        "coupon_frequency": coupon_frequency,
+        "maturity_date": maturity_date,
+        "callable": callable,
+        "call_date": call_date if callable else None,
+        "call_price": call_price if callable else None,
+        "par_value": par_value,
+        "quantity": quantity,
+        "settlement_date": settlement_date,
+        "total_markup": total_markup,
+        "duration_type": duration_type,
+        "error_message": error_message
+    }
+    bonds.append(bond)
 
 # Create columns for buttons
 col1, col2, _ = st.columns([2, 1, 6])  # Adjusted column widths
 
 # Calculate button
 if col1.button("Calculate"):
-    if error_message:
-        st.error("Cannot calculate because of invalid call date.")
-    else:
-        # Calculations
+    portfolio_duration = 0
+    total_value = 0
+
+    for i, bond in enumerate(bonds):
         freq_dict = {"Annual": 1, "Semi-Annual": 2, "Quarterly": 4, "Monthly/GSE": 12}
-        freq = freq_dict[coupon_frequency]
-        n_periods = (maturity_date - settlement_date).days // (365 // freq)
-        
+        freq = freq_dict[bond["coupon_frequency"]]
+        n_periods = (bond["maturity_date"] - bond["settlement_date"]).days // (365 // freq)
+
         if n_periods <= 0:
-            st.error("Error: Settlement date must be before the maturity date.")
+            st.error(f"Error: Settlement date for Bond {i+1} must be before the maturity date.")
         else:
-            coupon_payment = annual_coupon_rate / 100 * par_value / freq
-            ytm = calculate_ytm(price, par_value, annual_coupon_rate, n_periods, freq)
+            coupon_payment = bond["annual_coupon_rate"] / 100 * bond["par_value"] / freq
+            ytm = calculate_ytm(bond["price"], bond["par_value"], bond["annual_coupon_rate"], n_periods, freq)
             ytc = None
             convexity_callable = None
             duration_callable = None
-            if callable:
-                ytc = calculate_ytc(price, par_value, annual_coupon_rate, call_price, call_date, settlement_date, freq)
-                convexity_callable = calculate_convexity_callable(price, par_value, annual_coupon_rate, call_price, call_date, ytm, settlement_date, freq)
-                duration_callable = calculate_macaulay_duration(par_value, annual_coupon_rate, ytc, n_periods, freq)
-                if duration_type == "Modified":
+            if bond["callable"]:
+                ytc = calculate_ytc(bond["price"], bond["par_value"], bond["annual_coupon_rate"], bond["call_price"], bond["call_date"], bond["settlement_date"], freq)
+                convexity_callable = calculate_convexity_callable(bond["price"], bond["par_value"], bond["annual_coupon_rate"], bond["call_price"], bond["call_date"], ytm, bond["settlement_date"], freq)
+                duration_callable = calculate_macaulay_duration(bond["par_value"], bond["annual_coupon_rate"], ytc, n_periods, freq)
+                if bond["duration_type"] == "Modified":
                     duration_callable = calculate_modified_duration(duration_callable, ytc, freq)
-                elif duration_type == "Key Rate":
-                    duration_callable = calculate_key_rate_duration(price, par_value, annual_coupon_rate, ytc, n_periods, freq)
-            
-            macaulay_duration = calculate_macaulay_duration(par_value, annual_coupon_rate, ytm, n_periods, freq)
-            if duration_type == "Macaulay":
-                duration = macaulay_duration
-            elif duration_type == "Modified":
-                duration = calculate_modified_duration(macaulay_duration, ytm, freq)
-            elif duration_type == "Key Rate":
-                duration = calculate_key_rate_duration(price, par_value, annual_coupon_rate, ytm, n_periods, freq)
-            
-            convexity = calculate_convexity(price, par_value, annual_coupon_rate, ytm, n_periods, freq)
-            
-            accrued_interest = (datetime.now().date() - settlement_date).days / 365 * (annual_coupon_rate / 100) * par_value
-            total_cost = price * quantity + total_markup
+                elif bond["duration_type"] == "Key Rate":
+                    duration_callable = calculate_key_rate_duration(bond["price"], bond["par_value"], bond["annual_coupon_rate"], ytc, n_periods, freq)
 
-            # Create a DataFrame for the output
+            macaulay_duration = calculate_macaulay_duration(bond["par_value"], bond["annual_coupon_rate"], ytm, n_periods, freq)
+            if bond["duration_type"] == "Macaulay":
+                duration = macaulay_duration
+            elif bond["duration_type"] == "Modified":
+                duration = calculate_modified_duration(macaulay_duration, ytm, freq)
+            elif bond["duration_type"] == "Key Rate":
+                duration = calculate_key_rate_duration(bond["price"], bond["par_value"], bond["annual_coupon_rate"], ytm, n_periods, freq)
+
+            convexity = calculate_convexity(bond["price"], bond["par_value"], bond["annual_coupon_rate"], ytm, n_periods, freq)
+
+            accrued_interest = (datetime.now().date() - bond["settlement_date"]).days / 365 * (bond["annual_coupon_rate"] / 100) * bond["par_value"]
+            total_cost = bond["price"] * bond["quantity"] + bond["total_markup"]
+
+            bond_value = bond["price"] * bond["quantity"]
+            weighted_duration = duration * bond_value
+            portfolio_duration += weighted_duration
+            total_value += bond_value
+
+            # Create a DataFrame for the output of each bond
             output_data = {
                 "Metric": ["Coupon Payment", "Number of Periods", "Accrued Interest", "Total Cost", "Yield to Maturity (YTM)", "Duration", "Convexity"],
                 "Value": [f"${coupon_payment:.2f}", n_periods, f"${accrued_interest:.2f}", f"${total_cost:.2f}", f"{ytm:.2f}%", f"{duration:.2f} years", f"{convexity:.2f} years"]
             }
-            if callable:
+            if bond["callable"]:
                 output_data["Metric"].extend(["Yield to Call (YTC)", "Duration (Callable)", "Convexity (Callable)"])
                 output_data["Value"].extend([f"{ytc:.2f}%", f"{duration_callable:.2f} years", f"{convexity_callable:.2f} years"])
 
@@ -188,25 +212,31 @@ if col1.button("Calculate"):
             table_html = table_html.replace('<thead>', '<thead style="font-weight: bold; background-color: #ffffff;">')
             table_html = table_html.replace('<th>', '<th style="border: 1px solid black; padding: 8px;">')
             table_html = table_html.replace('<td>', '<td style="border: 1px solid black; padding: 8px;">')
-            
-            st.markdown(table_html, unsafe_allow_html=True)
-            
-            # Plotting the graph
-            prices = np.linspace(price - 10, price + 10, 50)
-            ytm_values = [calculate_ytm(p, par_value, annual_coupon_rate, n_periods, freq) for p in prices]
-            ytc_values = [calculate_ytc(p, par_value, annual_coupon_rate, call_price, call_date, settlement_date, freq) for p in prices] if callable else None
 
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(x=ytm_values, y=prices, mode='lines', name='Yield to Maturity'))
-            if ytc_values is not None:
-                fig.add_trace(go.Scatter(x=ytc_values, y=prices, mode='lines', name='Yield to Call', line=dict(dash='dash')))
-            fig.update_layout(
-                xaxis_title="Yield (%)",
-                yaxis_title="Price $",
-                legend_title="Yields",
-                title="Duration"
-            )
-            st.plotly_chart(fig)
+            st.markdown(f"### Bond {i+1} Results", unsafe_allow_html=True)
+            st.markdown(table_html, unsafe_allow_html=True)
+
+    # Calculate and display portfolio duration
+    if total_value > 0:
+        portfolio_duration /= total_value
+        st.write(f"## Portfolio Duration: {portfolio_duration:.2f} years")
+
+    # Plotting the graph for the last bond
+    prices = np.linspace(bonds[-1]["price"] - 10, bonds[-1]["price"] + 10, 50)
+    ytm_values = [calculate_ytm(p, bonds[-1]["par_value"], bonds[-1]["annual_coupon_rate"], n_periods, freq) for p in prices]
+    ytc_values = [calculate_ytc(p, bonds[-1]["par_value"], bonds[-1]["annual_coupon_rate"], bonds[-1]["call_price"], bonds[-1]["call_date"], bonds[-1]["settlement_date"], freq) for p in prices] if bonds[-1]["callable"] else None
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=ytm_values, y=prices, mode='lines', name='Yield to Maturity'))
+    if ytc_values is not None:
+        fig.add_trace(go.Scatter(x=ytc_values, y=prices, mode='lines', name='Yield to Call', line=dict(dash='dash')))
+    fig.update_layout(
+        xaxis_title="Yield (%)",
+        yaxis_title="Price $",
+        legend_title="Yields",
+        title="Duration"
+    )
+    st.plotly_chart(fig)
 
 # Reset button
 if col2.button("Reset"):
@@ -242,3 +272,4 @@ The relationship between bond prices and yields is fundamental to bond investing
 
 Use this calculator to explore and understand how changes in bond prices affect yields, helping you optimize your bond investment strategy.
 """)
+
