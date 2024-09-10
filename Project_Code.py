@@ -181,9 +181,12 @@ if col1.button("Calculate"):
             st.plotly_chart(fig)
 
 # Reset button
-if col2.button("Reset"):
-    st.experimental_rerun()
-
+if st.button("Reset"):
+    try:
+        st.experimental_rerun()
+    except Exception as e:
+        st.error(f"Error resetting: {e}")
+        
 # About section
 st.markdown("""
 ### Understanding Bond Prices and Yields:
