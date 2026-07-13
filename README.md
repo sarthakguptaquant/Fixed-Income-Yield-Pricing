@@ -1,68 +1,72 @@
-# [Fixed Income: Bond Price & Yield Calculator](https://bond-calculator.streamlit.app/)
+<div align="center">
+<img src="assets/banner.svg" width="100%" alt="Bond Price and Yield — fixed income pricing and yield analytics"/>
+<br/>
 
-## Overview
-This interactive web application allows users to calculate bond prices and yields (Yield to Maturity and Yield to Call) and visualize their relationship. It's a useful tool for fixed income investors and financial professionals, providing real-time insights into bond valuation.
+![Python](https://img.shields.io/badge/python-3.11%2B-1B3DFF?style=flat-square)
+![Streamlit](https://img.shields.io/badge/streamlit-app-1B3DFF?style=flat-square)
+![Demo](https://img.shields.io/badge/demo-live-00B870?style=flat-square)
 
-## Features
-- **Yield to Maturity (YTM) Calculation**: Calculate the total return expected on a bond if held until maturity.
-- **Yield to Call (YTC) Calculation**: For callable bonds, calculate the yield assuming the bond is called before its maturity date.
-- **Duration and Convexity Metrics**: Provides detailed calculations of Macaulay Duration, Modified Duration, Key Rate Duration, and Convexity, including separate metrics for callable bonds.
-- **Price and Yield Relationship Visualization**: Interactive chart showing how bond prices and yields relate.
-- **Reset Functionality**: Reset inputs and start fresh.
-- **Structured Output**: Results are presented in a clean, structured table format.
-- **Detailed Explanations**: Understand key concepts related to bond prices and yields.
+<br/>
+<sub><a href="#what-it-does">What it does</a> · <a href="#demo">Demo</a> · <a href="#install-and-run">Install and run</a> · <a href="#concepts">Concepts</a> · <a href="#practical-insights">Practical insights</a></sub>
+</div>
 
-## Technologies
-- **Streamlit**: For creating a user-friendly and interactive web interface.
-- **Python**: Handles computational logic, including financial calculations.
-- **NumPy**: Used for numerical operations and handling arrays.
-- **SciPy**: Utilized for optimizing functions and finding roots.
-- **Plotly**: For interactive and visually appealing charting.
+---
 
-### Key Concepts
+## What it does
 
-- **Inverse Relationship**: Bond prices and yields generally move in opposite directions. When a bond's price increases, its yield decreases, and vice versa.
-- **Yield to Maturity (YTM)**: This is the total return expected on a bond if held until maturity. It accounts for the bond's current market price, par value, coupon interest rate, and time to maturity.
-- **Yield to Call (YTC)**: For callable bonds, this is the yield assuming the bond is called (redeemed by the issuer) before its maturity date. It considers the call price and the time until the call date.
-- **Yield to Worst (YTW)**: This is the lowest yield an investor can receive if the bond is called or matures early. It is the minimum between YTM and YTC.
-- **Duration**: This measures the sensitivity of the bond's price to changes in interest rates. Types of duration include Macaulay Duration, Modified Duration, and Key Rate Duration.
-- **Convexity**: This measures the sensitivity of the duration of the bond to changes in interest rates. It provides an estimate of the change in duration for a change in yield.
+A Streamlit calculator for bond pricing and yield analytics: enter a bond's price, par value, coupon rate, and maturity, and it returns yield to maturity, duration (Macaulay, Modified, or Key Rate), and convexity. Callable bonds add yield to call and callable-specific duration and convexity.
 
-### How to Use the Calculator
+The interactive chart plots the price-yield relationship directly, so the inverse relationship between the two is visible rather than just stated in a table.
 
-1. **Enter Bond Details**: Input the bond's price, par value, coupon rate, and other relevant details.
-2. **Calculate Yields**: The calculator computes the YTM and YTC based on your inputs.
-3. **Analyze the Chart**: The interactive chart shows how bond prices and yields relate. Hover over the chart to see specific bond and price information that updates dynamically.
-4. **Review the Metrics**: The calculator provides key metrics such as coupon payment, number of periods, accrued interest, total cost, yield to maturity, duration, and convexity in a structured table. For callable bonds, additional metrics such as yield to call, callable duration, and callable convexity are also provided.
+Yields are solved with Newton's method (`scipy.optimize.newton`) rather than a closed form, which is what lets the same code path handle both plain and callable bonds.
 
-### Practical Insights
+## Demo
 
-- **Investment Decisions**: Understanding the relationship between bond prices and yields helps in making informed investment decisions.
-- **Interest Rate Movements**: Keep an eye on interest rate trends, as they significantly impact bond prices and yields.
-- **Bond Characteristics**: Different bonds (corporate, municipal, treasury) have unique features and risks. Consider these when analyzing yields.
+Live app: **[bond-calculator.streamlit.app](https://bond-calculator.streamlit.app/)**
 
-Use this calculator to explore and understand how changes in bond prices affect yields, helping you optimize your bond investment strategy.
+Hosted on Streamlit Community Cloud's free tier, so it sleeps after a period of inactivity. First load shows a "this app has gone to sleep" screen with a one-click wake button; the app is back within about 30 seconds.
 
-## Contributing
+## Install and run
 
-We encourage contributions from the community, whether they are feature improvements, bug fixes, or documentation enhancements. Follow these steps to contribute:
+```bash
+git clone https://github.com/sarthakguptaquant/Fixed-Income-Yield-Pricing.git
+cd Fixed-Income-Yield-Pricing
+pip install -r requirements.txt
+streamlit run Project_Code.py
+```
 
-1. **Fork the Repository**: Fork the project to your GitHub account.
-2. **Clone Your Fork**: Download your fork to your computer.
-3. **Create a New Branch**: Switch to a new branch for your changes.
-4. **Make Changes**: Implement your changes or improvements.
-5. **Commit Your Changes**: Save your changes with a clear commit message.
-6. **Push to GitHub**: Upload the changes to your fork.
-7. **Submit a Pull Request**: Open a pull request from your branch to the main project.
+Opens at `localhost:8501`. A `.devcontainer/devcontainer.json` is included for GitHub Codespaces.
 
-## License
+### Using the calculator
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+1. Enter the bond's price, par value, coupon rate, and other details.
+2. Click Calculate. YTM (and YTC, if the bond is callable) are computed from your inputs.
+3. Read the chart: it shows how price and yield relate, and updates with your inputs.
+4. Read the table: coupon payment, number of periods, accrued interest, total cost, YTM, duration, and convexity, plus YTC, callable duration, and callable convexity for callable bonds.
 
-## Support
+<a id="concepts"></a>
+<details>
+<summary><strong>Concept glossary: YTM, YTC, duration, convexity</strong></summary>
 
-For support, raise an issue on the GitHub repository. We aim to address issues promptly and help resolve any challenges users may face.
+- **Inverse relationship**: bond prices and yields move in opposite directions. When a bond's price rises, its yield falls, and vice versa.
+- **Yield to Maturity (YTM)**: the total return expected on a bond if held to maturity, accounting for current market price, par value, coupon rate, and time to maturity.
+- **Yield to Call (YTC)**: for callable bonds, the yield assuming the bond is called (redeemed by the issuer) before maturity. Depends on the call price and time to the call date.
+- **Yield to Worst (YTW)**: the lowest yield an investor can receive across call and maturity scenarios — the minimum of YTM and YTC.
+- **Duration**: the sensitivity of a bond's price to interest rate changes. The calculator supports Macaulay, Modified, and Key Rate duration.
+- **Convexity**: the sensitivity of duration itself to interest rate changes — an estimate of how duration shifts as yield moves.
 
-Thank you for using or contributing to the Fixed Income: Bond Price & Yield Calculator application!
+</details>
 
-# [Link to App](https://bond-calculator.streamlit.app/)
+## Practical insights
+
+- The price-yield relationship is the mechanism behind most bond investment decisions: understanding it is what makes duration and convexity useful rather than abstract.
+- Interest rate trends matter because they move both price and yield together; watching rate direction is watching the calculator's two main outputs at once.
+- Corporate, municipal, and treasury bonds carry different risk and call profiles — the same YTM on two bonds does not mean the same risk.
+
+---
+
+<div align="center">
+<img src="assets/sg-mark.svg" height="20" alt="SG"/>
+<br/>
+<sub><a href="https://github.com/sarthakguptaquant">sarthakguptaquant</a> · AI x quantitative finance · <a href="https://sarthakgpt.com">sarthakgpt.com</a></sub>
+</div>
