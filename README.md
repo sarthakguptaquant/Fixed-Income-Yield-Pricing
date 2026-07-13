@@ -5,9 +5,10 @@
 ![Python](https://img.shields.io/badge/python-3.11%2B-1B3DFF?style=flat-square)
 ![Streamlit](https://img.shields.io/badge/streamlit-app-1B3DFF?style=flat-square)
 ![Demo](https://img.shields.io/badge/demo-live-00B870?style=flat-square)
+![License](https://img.shields.io/badge/License-MIT-1B3DFF?style=flat-square)
 
 <br/>
-<sub><a href="#what-it-does">What it does</a> · <a href="#demo">Demo</a> · <a href="#install-and-run">Install and run</a> · <a href="#concepts">Concepts</a> · <a href="#practical-insights">Practical insights</a></sub>
+<sub><a href="#what-it-does">What it does</a> · <a href="#demo">Demo</a> · <a href="#install-and-run">Install and run</a> · <a href="#concepts">Concepts</a> · <a href="#practical-insights">Practical insights</a> · <a href="#license">License</a></sub>
 </div>
 
 ---
@@ -62,6 +63,10 @@ Opens at `localhost:8501`. A `.devcontainer/devcontainer.json` is included for G
 - The price-yield relationship is the mechanism behind most bond investment decisions: understanding it is what makes duration and convexity useful rather than abstract.
 - Interest rate trends matter because they move both price and yield together; watching rate direction is watching the calculator's two main outputs at once.
 - Corporate, municipal, and treasury bonds carry different risk and call profiles — the same YTM on two bonds does not mean the same risk.
+
+## License
+
+[MIT](LICENSE).
 
 ---
 
